@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 def get_data_loaders(
-    batch_size: int = 32, valid_size: float = 0.2, num_workers: int = 0, limit: int = -1
+    batch_size: int = 32, valid_size: float = 0.2, num_workers: int = -1, limit: int = -1
 ):
     """
     Create and returns the train_one_epoch, validation and test data loaders.
@@ -49,12 +49,11 @@ def get_data_loaders(
             # YOUR CODE HERE
             [
                 transforms.Resize(256),
-                transforms.RandomCrop(224),
-            # Add data augmentation transforms here
-            #transforms.RandomAffine(0, translate=(0.1, 0.1)),
-            #transforms.RandomRotation(30),
-            #transforms.ColorJitter(brightness=0.4, contrast = 0.4, saturation=0.4, hue = 0.1),
-                transforms.RandAugment(num_ops=2, magnitude=10,interpolation=transforms.InterpolationMode.BILINEAR),
+                transforms.RandomCrop((224,224)),
+                transforms.RandomHorizontalFlip(0.5),
+                # Add data augmentation transforms here
+                transforms.RandAugment(num_ops=2, magnitude=2,interpolation=transforms.InterpolationMode.BILINEAR),
+                transforms.RandomAffine(degrees=(-5, 5), translate=(0, 0.1), scale=(1.0, 1.25), shear=(-10, 10)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
@@ -63,7 +62,7 @@ def get_data_loaders(
             # YOUR CODE HERE
             [
                 transforms.Resize(256),
-                transforms.CenterCrop(254),
+                transforms.CenterCrop((224,224)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean, std),
             ]
@@ -72,7 +71,7 @@ def get_data_loaders(
             # YOUR CODE HERE
             [
                transforms.Resize(256),
-               transforms.CenterCrop(254),
+               transforms.CenterCrop((224,224)),
                transforms.ToTensor(),
                transforms.Normalize(mean, std),
             ]
@@ -166,7 +165,7 @@ def visualize_one_batch(data_loaders, max_n: int = 5):
     dataiter  = iter(data_loaders["train"]) # YOUR CODE HERE
     # Then call the .next() method on the iterator you just
     # obtained
-    images, labels  = dataiter.next()  # YOUR CODE HERE
+    images, labels  = next(dataiter)  # YOUR CODE HERE
 
     # Undo the normalization (for visualization purposes)
     mean, std = compute_mean_and_std()
@@ -216,7 +215,7 @@ def test_data_loaders_keys(data_loaders):
 def test_data_loaders_output_type(data_loaders):
     # Test the data loaders
     dataiter = iter(data_loaders["train"])
-    images, labels = dataiter.next()
+    images, labels = next(dataiter)
 
     assert isinstance(images, torch.Tensor), "images should be a Tensor"
     assert isinstance(labels, torch.Tensor), "labels should be a Tensor"
@@ -225,8 +224,10 @@ def test_data_loaders_output_type(data_loaders):
 
 
 def test_data_loaders_output_shape(data_loaders):
+#     dataiter = iter(data_loaders["train"])
+#     images, labels = dataiter.next()
     dataiter = iter(data_loaders["train"])
-    images, labels = dataiter.next()
+    images, labels = next(dataiter)
 
     assert len(images) == 2, f"Expected a batch of size 2, got size {len(images)}"
     assert (
